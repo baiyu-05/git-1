@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喝水记录</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: linear-gradient(160deg, #e8f4f8 0%, #c8e6f0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    padding: 48px 40px 40px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,60,80,0.12);
+  }
+
+  .glass-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+
+  .label {
+    font-size: 15px;
+    color: #4a7a8a;
+    letter-spacing: 0.3px;
+    margin-bottom: 12px;
+  }
+
+  .count {
+    font-size: 72px;
+    font-weight: 600;
+    color: #1a4a5a;
+    line-height: 1;
+    margin-bottom: 6px;
+    transition: transform 0.15s ease;
+  }
+
+  .count.bump { transform: scale(1.15); }
+
+  .sub {
+    font-size: 14px;
+    color: #6a9aaa;
+    margin-bottom: 28px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn:active { transform: scale(0.92); }
+
+  .btn-plus {
+    background: #2a9ec8;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(42,158,200,0.35);
+  }
+  .btn-plus:hover { box-shadow: 0 6px 24px rgba(42,158,200,0.5); }
+
+  .btn-reset {
+    background: #e0eef4;
+    color: #4a7a8a;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(0,60,80,0.08);
+  }
+  .btn-reset:hover { background: #d0e4ec; }
+
+  .goal-bar {
+    margin-top: 20px;
+    height: 4px;
+    border-radius: 2px;
+    background: #dce8ec;
+    overflow: hidden;
+  }
+
+  .goal-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2a9ec8, #4ac0e8);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="glass-icon">🥤</div>
+  <div class="label">今日喝水</div>
+  <div class="count" id="count">0</div>
+  <div class="sub">杯 · 目标 8 杯</div>
+
+  <div class="btn-group">
+    <button class="btn btn-plus" id="btnPlus">+</button>
+    <button class="btn btn-reset" id="btnReset">⟳</button>
+  </div>
+
+  <div class="goal-bar">
+    <div class="goal-fill" id="goalFill"></div>
+  </div>
+</div>
+
+<script>
+  let count = 0;
+  const goal = 8;
+  const countEl = document.getElementById('count');
+  const fillEl = document.getElementById('goalFill');
+  const btnPlus = document.getElementById('btnPlus');
+  const btnReset = document.getElementById('btnReset');
+
+  function update() {
+    countEl.textContent = count;
+    fillEl.style.width = Math.min((count / goal) * 100, 100) + '%';
+  }
+
+  function bump() {
+    countEl.classList.add('bump');
+    setTimeout(() => countEl.classList.remove('bump'), 150);
+  }
+
+  btnPlus.addEventListener('click', () => {
+    count++;
+    update();
+    bump();
+  });
+
+  btnReset.addEventListener('click', () => {
+    count = 0;
+    update();
+  });
+</script>
+</body>
+</html>
