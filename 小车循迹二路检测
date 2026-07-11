@@ -1,0 +1,164 @@
+#include "stm32f4xx.h"
+#include "usart.h"
+#include "delay.h"
+
+#define MOTOR_L1_PORT    GPIOD
+#define MOTOR_L1_PIN     GPIO_Pin_6         
+
+#define MOTOR_L2_PORT    GPIOB
+#define MOTOR_L2_PIN     GPIO_Pin_7          
+
+#define MOTOR_R1_PORT    GPIOA
+#define MOTOR_R1_PIN     GPIO_Pin_4        
+
+#define MOTOR_R2_PORT    GPIOD
+#define MOTOR_R2_PIN     GPIO_Pin_7         
+
+
+#define SENSOR_TK1_PORT  GPIOC
+#define SENSOR_TK1_PIN   GPIO_Pin_6       
+
+#define SENSOR_TK2_PORT  GPIOG
+#define SENSOR_TK2_PIN   GPIO_Pin_15         
+
+#define SENSOR_WHITE     ((uint8_t)0)        
+#define SENSOR_BLACK     ((uint8_t)1)       
+
+static void Motor_Write(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, uint8_t level)
+{
+    if (level)
+        GPIO_SetBits(GPIOx, GPIO_Pin);
+    else
+        GPIO_ResetBits(GPIOx, GPIO_Pin);
+}
+
+void Motor_GPIO_Init(void)
+{
+    GPIO_InitTypeDef gpio;
+
+    
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA |
+                           RCC_AHB1Periph_GPIOB |
+                           RCC_AHB1Periph_GPIOD, ENABLE);
+
+    gpio.GPIO_Pin   = MOTOR_L2_PIN;
+    gpio.GPIO_Mode  = GPIO_Mode_OUT;
+    gpio.GPIO_Speed = GPIO_Speed_50MHz;
+    gpio.GPIO_OType = GPIO_OType_PP;
+    gpio.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+    GPIO_Init(MOTOR_L2_PORT, &gpio);
+
+    gpio.GPIO_Pin   = MOTOR_R1_PIN;
+    GPIO_Init(MOTOR_R1_PORT, &gpio);
+
+    gpio.GPIO_Pin   = MOTOR_L1_PIN | MOTOR_R2_PIN;
+    GPIO_Init(MOTOR_L1_PORT, &gpio);
+
+    Motor_Write(MOTOR_L1_PORT, MOTOR_L1_PIN, 0);
+    Motor_Write(MOTOR_L2_PORT, MOTOR_L2_PIN, 0);
+    Motor_Write(MOTOR_R1_PORT, MOTOR_R1_PIN, 0);
+    Motor_Write(MOTOR_R2_PORT, MOTOR_R2_PIN, 0);
+}
+
+void Sensor_GPIO_Init(void)
+{
+    GPIO_InitTypeDef gpio;
+
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC |
+                           RCC_AHB1Periph_GPIOG, ENABLE);
+
+    gpio.GPIO_Pin   = SENSOR_TK1_PIN;
+    gpio.GPIO_Mode  = GPIO_Mode_IN;
+    gpio.GPIO_Speed = GPIO_Speed_50MHz;
+    gpio.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+    GPIO_Init(SENSOR_TK1_PORT, &gpio);
+
+    gpio.GPIO_Pin   = SENSOR_TK2_PIN;
+    GPIO_Init(SENSOR_TK2_PORT, &gpio);
+}
+
+void Car_Forward(void)
+{
+    Motor_Write(MOTOR_L1_PORT, MOTOR_L1_PIN, 1);
+    Motor_Write(MOTOR_L2_PORT, MOTOR_L2_PIN, 0);
+    Motor_Write(MOTOR_R1_PORT, MOTOR_R1_PIN, 1);
+    Motor_Write(MOTOR_R2_PORT, MOTOR_R2_PIN, 0);
+}
+
+void Car_Backward(void)
+{
+    Motor_Write(MOTOR_L1_PORT, MOTOR_L1_PIN, 0);
+    Motor_Write(MOTOR_L2_PORT, MOTOR_L2_PIN, 1);
+    Motor_Write(MOTOR_R1_PORT, MOTOR_R1_PIN, 0);
+    Motor_Write(MOTOR_R2_PORT, MOTOR_R2_PIN, 1);
+}
+
+void Car_Stop(void)
+{
+    Motor_Write(MOTOR_L1_PORT, MOTOR_L1_PIN, 0);
+    Motor_Write(MOTOR_L2_PORT, MOTOR_L2_PIN, 0);
+    Motor_Write(MOTOR_R1_PORT, MOTOR_R1_PIN, 0);
+    Motor_Write(MOTOR_R2_PORT, MOTOR_R2_PIN, 0);
+}
+
+void Car_TurnLeft(void)
+{
+    Motor_Write(MOTOR_L1_PORT, MOTOR_L1_PIN, 0);
+    Motor_Write(MOTOR_L2_PORT, MOTOR_L2_PIN, 1);
+    Motor_Write(MOTOR_R1_PORT, MOTOR_R1_PIN, 1);
+    Motor_Write(MOTOR_R2_PORT, MOTOR_R2_PIN, 0);
+}
+
+void Car_TurnRight(void)
+{
+    Motor_Write(MOTOR_L1_PORT, MOTOR_L1_PIN, 1);
+    Motor_Write(MOTOR_L2_PORT, MOTOR_L2_PIN, 0);
+    Motor_Write(MOTOR_R1_PORT, MOTOR_R1_PIN, 0);
+    Motor_Write(MOTOR_R2_PORT, MOTOR_R2_PIN, 1);
+}
+
+void Car_LineFollow(void)
+{
+    uint8_t tk1, tk2;
+
+    while (1)
+    {
+        
+        tk1 = GPIO_ReadInputDataBit(SENSOR_TK1_PORT, SENSOR_TK1_PIN);
+        tk2 = GPIO_ReadInputDataBit(SENSOR_TK2_PORT, SENSOR_TK2_PIN);
+
+        if (tk1 == 0 && tk2 == 0)         
+        {
+            Car_Forward();
+        }
+        else if (tk1 == 0 && tk2 == 1)     
+        {
+            Car_TurnLeft();
+        }
+        else if (tk1 == 1 && tk2 == 0)       
+        {
+            Car_TurnRight();
+        }
+        else                                 
+        {
+            Car_Stop();
+        }
+
+        delay_ms(5);   
+    }
+}
+
+int main(void)
+{
+    
+    delay_init(168);          
+
+    Motor_GPIO_Init();       
+    Sensor_GPIO_Init();  
+
+	while (1)
+    {
+		Car_LineFollow();
+		delay_ms(5);   
+	}
+}
